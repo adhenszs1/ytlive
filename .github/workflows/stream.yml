@@ -1,1 +1,47 @@
+name: Bot Live Streaming Otomatis
+
+on:
+  workflow_dispatch: # Agar bisa distart manual tombol
+  schedule:
+    # --- PENGATURAN JADWAL (UTC TIME) ---
+    # Rumus: Jam WIB dikurangi 7 Jam.
+    # Contoh: Mau Live jam 17:30 WIB -> 17:30 - 7 jam = 10:30 UTC
+    # Format Cron: "Menit Jam Tanggal Bulan *"
+    
+    # Jadwal Besok (Contoh tgl 4 Jan, jam 17:30 WIB)
+    - cron: "30 10 4 1 *"
+    
+    # Jadwal Lusa (Contoh tgl 5 Jan, jam 17:30 WIB)
+    - cron: "30 10 5 1 *"
+
+jobs:
+  live-youtube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180 # Durasi Live maksimal 3 Jam (Gratisan)
+
+    steps:
+      - name: 1. Persiapan Mesin
+        uses: actions/checkout@v3
+
+      - name: 2. Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: 3. Download Video
+        run: |
+          # GANTI LINK DI BAWAH INI DENGAN LINK VIDEO ANDA SENDIRI
+          wget -O video1.mp4 "https://github.com/AKUN_ANDA/REPO/releases/download/v1.0/video_anda.mp4"
+          # Tambahkan baris wget lagi jika video ada banyak
+
+      - name: 4. Buat Playlist Acak
+        run: |
+          ls *.mp4 | shuf > list_acak.txt
+          for f in $(cat list_acak.txt); do echo "file '$PWD/$f'" >> playlist.txt; done
+
+      - name: 5. Mulai Streaming
+        env:
+          KUNCI: ${{ secrets.STREAM_KEY }}
+        run: |
+          ffmpeg -re -f concat -safe 0 -stream_loop -1 -i playlist.txt -c:v libx264 -preset veryfast -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "rtmp://a.rtmp.youtube.com/live2/$KUNCI"
 
