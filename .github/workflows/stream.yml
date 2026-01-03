@@ -1,26 +1,41 @@
-name: Bot Live Streaming Otomatis
+name: jadwal live
 
 on:
-  workflow_dispatch: # Agar bisa distart manual tombol
+  workflow_dispatch:
   schedule:
-    # --- PENGATURAN JADWAL (UTC TIME) ---
-    # Rumus: Jam WIB dikurangi 7 Jam.
-    # Contoh: Mau Live jam 17:30 WIB -> 17:30 - 7 jam = 10:30 UTC
-    # Format Cron: "Menit Jam Tanggal Bulan *"
-    
-    # Jadwal Besok (Contoh tgl 4 Jan, jam 17:30 WIB)
-    - cron: "30 10 4 1 *"
-    
-    # Jadwal Lusa (Contoh tgl 5 Jan, jam 17:30 WIB)
-    - cron: "30 10 5 1 *"
+    # --- HARI 1 (HARI INI) ---
+    # Target: Tgl 2 Jan, Jam 16:00 WIB (09:00 UTC)
+    - cron: "30 10 2 1 *"
+
+    # --- HARI 2 s/d 10 (Target NEW YORK) ---
+    # Target: Jam 15:30 NY (20:30 UTC) = Jam 03:30 WIB (Besoknya)
+
+    # Day 2 (3 Jan)
+    - cron: "30 20 3 1 *"
+    # Day 3 (4 Jan)
+    - cron: "30 20 4 1 *"
+    # Day 4 (5 Jan)
+    - cron: "30 20 5 1 *"
+    # Day 5 (6 Jan)
+    - cron: "30 20 6 1 *"
+    # Day 6 (7 Jan)
+    - cron: "30 20 7 1 *"
+    # Day 7 (8 Jan)
+    - cron: "30 20 8 1 *"
+    # Day 8 (9 Jan)
+    - cron: "30 20 9 1 *"
+    # Day 9 (10 Jan)
+    - cron: "30 20 10 1 *"
+    # Day 10 (11 Jan)
+    - cron: "30 20 11 1 *"
 
 jobs:
-  live-youtube:
+  live-acak-otomatis:
     runs-on: ubuntu-latest
-    timeout-minutes: 180 # Durasi Live maksimal 3 Jam (Gratisan)
+    timeout-minutes: 180 # 3 JAM NONSTOP
 
     steps:
-      - name: 1. Persiapan Mesin
+      - name: 1. Siapkan Mesin
         uses: actions/checkout@v3
 
       - name: 2. Install FFmpeg
@@ -28,20 +43,41 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: 3. Download Video
+      - name: 3. Download Koleksi Video
         run: |
-          # GANTI LINK DI BAWAH INI DENGAN LINK VIDEO ANDA SENDIRI
-          wget -O video1.mp4 "https://github.com/AKUN_ANDA/REPO/releases/download/v1.0/video_anda.mp4"
-          # Tambahkan baris wget lagi jika video ada banyak
+          # ========================================================
+          # MASUKKAN SEMUA LINK VIDEO ANDA DI BAWAH INI
+          # (Minimal 2 video supaya bisa diacak)
+          # ========================================================
 
-      - name: 4. Buat Playlist Acak
+          wget -O vid1.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.Marvel.Avengers.NEW.EPISODES.Puzzle.Wrong.Heads.mp4"
+          wget -O vid2.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.-.Assasino.Ballerina.Cappucino.x.KPop.Demon.Hunters.Puzzle.Wrong.Heads.mp4"
+          wget -O vid3.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.-.Gabby.s.Dollhouse.Puzzle.Wrong.Heads.Cute.Wrong.EYE.mp4"
+          wget -O vid4.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.-.PAW.PATROL.Puzzle.Wrong.Heads.mp4"
+          wget -O vid5.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.-.Peppa.Pig.x.Elsa.x.Sheriff.Labrador.Puzzle.Wrong.Heads.Cute.Wrong.mp4"
+          wget -O vid6.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.-.TUNG.TUNG.SAHUR.x.RAGATHA.Puzzle.Wrong.Heads.Cute.Wrong.EYE.mp4"
+          wget -O vid7.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.New.Episodes.BabyBoss.x.Paw.Patrol.x.Baby.Shark.Wrong.Heads.Cute.Wrong.EYE.mp4"
+          wget -O vid8.mp4 "https://github.com/iniadhen-coder/live/releases/download/v1.0/WRONG.EYES.Super.Mario.Franchise.NEW.EPISODES.Puzzle.Wrong.Heads.mp4"
+
+          # Mau tambah lagi? Tinggal copy baris wget di atas:
+          # wget -O vid4.mp4 "LINK_VIDEO_4"
+
+      - name: 4. Kocok Urutan (SHUFFLE)
         run: |
-          ls *.mp4 | shuf > list_acak.txt
-          for f in $(cat list_acak.txt); do echo "file '$PWD/$f'" >> playlist.txt; done
+          echo "[INFO] Mengocok urutan video..."
+
+          # Mengacak semua file .mp4 yang berhasil didownload
+          ls *.mp4 | shuf > urutan_acak.txt
+
+          # Membuat playlist yang bisa dibaca FFmpeg
+          for f in $(cat urutan_acak.txt); do echo "file '$PWD/$f'" >> playlist.txt; done
+
+          echo "=== URUTAN TAYANG HARI INI ==="
+          cat playlist.txt
 
       - name: 5. Mulai Streaming
         env:
           KUNCI: ${{ secrets.STREAM_KEY }}
         run: |
+          # Memutar video berdasarkan playlist.txt
           ffmpeg -re -f concat -safe 0 -stream_loop -1 -i playlist.txt -c:v libx264 -preset veryfast -maxrate 3000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 128k -ar 44100 -f flv "rtmp://a.rtmp.youtube.com/live2/$KUNCI"
-
